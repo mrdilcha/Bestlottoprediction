@@ -1,27 +1,39 @@
-// Markov Chain Model (Server 1)
+// Helper function for moving average
+function movingAverage(arr, weights) {
+    return arr
+        .slice(-weights.length)  // Consider only the recent outcomes based on weights length
+        .reduce((acc, val, idx) => acc + val * weights[idx], 0) / weights.reduce((acc, w) => acc + w, 0);
+}
+
+// Markov Chain Model (Server 1) - Higher-Order
 function markovChainPrediction(outcomes) {
     const transitionMatrix = {
-        'b': { 'b': 0.6, 's': 0.4 },
-        's': { 'b': 0.3, 's': 0.7 }
+        'bb': { 'b': 0.7, 's': 0.3 },
+        'bs': { 'b': 0.5, 's': 0.5 },
+        'sb': { 'b': 0.4, 's': 0.6 },
+        'ss': { 'b': 0.2, 's': 0.8 }
     };
-    const lastOutcome = outcomes[outcomes.length - 1];
-    const probB = transitionMatrix[lastOutcome]['b'];
+    const lastTwoOutcomes = outcomes.slice(-2).join('');
+    const probB = transitionMatrix[lastTwoOutcomes]['b'];
     return Math.random() < probB ? 'b' : 's';
 }
 
-// Weighted Probability Model (Server 2)
+// Weighted Probability Model (Server 2) - Moving Average
 function weightedProbabilityPrediction(outcomes) {
     const countB = outcomes.filter(o => o === 'b').length;
-    const countS = outcomes.length - countB;
     const total = outcomes.length;
-    const probB = countB / total;
+    
+    // Weighted moving average for recent outcomes
+    const weights = [1, 2, 3, 4, 5];  // More weight to recent outcomes
+    const probB = movingAverage(outcomes.map(o => o === 'b' ? 1 : 0), weights);
+    
     return Math.random() < probB ? 'b' : 's';
 }
 
-// Pseudorandom Model (Server 3)
+// Pseudorandom Model (Server 3) - Enhanced Seeding
 function pseudorandomPrediction(outcomes) {
-    const seed = outcomes.reduce((acc, curr) => acc + (curr === 'b' ? 1 : 0), 0);
-    Math.seedrandom(seed);
+    const seed = outcomes.reduce((acc, curr, idx) => acc + (curr === 'b' ? idx + 1 : 0), 0);
+    Math.seedrandom(seed);  // Using seedrandom for reproducibility
     return Math.random() < 0.5 ? 'b' : 's';
 }
 
@@ -30,7 +42,7 @@ function translateOutcome(outcome) {
     return outcome === 'b' ? 'Big (B)' : 'Small (S)';
 }
 
-// Ensemble Prediction
+// Machine Learning-Style Weighted Voting
 function ensemblePrediction(outcomes) {
     const predictions = [];
 
@@ -40,9 +52,10 @@ function ensemblePrediction(outcomes) {
 
     predictions.push(server1Pred, server2Pred, server3Pred);
 
-    // Count occurrences of 'b' and 's'
-    const countB = predictions.filter(pred => pred === 'b').length;
-    const finalPrediction = countB >= 2 ? 'b' : 's'; // Majority vote
+    // Count occurrences of 'b' and 's' and apply weighted voting
+    const modelWeights = [0.5, 0.3, 0.2];  // Assign higher weight to more reliable models
+    const weightedPredictions = predictions.map((pred, idx) => pred === 'b' ? modelWeights[idx] : 0);
+    const finalPrediction = weightedPredictions.reduce((a, b) => a + b) >= 0.5 ? 'b' : 's';  // Weighted majority vote
 
     return {
         'Server 1': translateOutcome(server1Pred),
@@ -52,7 +65,7 @@ function ensemblePrediction(outcomes) {
     };
 }
 
-// Handle form submission
+// Handle form submission with input validation
 function handlePrediction(event) {
     event.preventDefault();
     
