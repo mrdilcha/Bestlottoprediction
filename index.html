@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prediction App</title>
+    <title>Dilcha Prediction</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js"></script>
 </head>
 <body>
     <div class="container">
-        <h1>Prediction App</h1>
+        <h1><span class="white-text">Dilcha</span> <span class="red-text">Prediction</span></h1>
         <form id="prediction-form" onsubmit="handlePrediction(event)">
             <label for="user-input">Enter the last 5 outcomes (b for Big, s for Small):</label>
             <input type="text" id="user-input" maxlength="5" required>
@@ -18,7 +18,9 @@
 
         <div id="checking-message" style="display:none;">Checking Servers...</div>
 
-        <div id="results-container" style="display:none;"></div>
+        <div id="results-container" style="display:none;">
+            <div id="server-results"></div>
+        </div>
     </div>
 
     <script src="logic.js"></script>
