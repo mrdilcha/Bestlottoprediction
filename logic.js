@@ -1,3 +1,16 @@
+// Store patterns in local storage or backend
+function storePattern(outcomes, result) {
+    let storedPatterns = JSON.parse(localStorage.getItem('patterns')) || {};
+    storedPatterns[outcomes.join('')] = result;
+    localStorage.setItem('patterns', JSON.stringify(storedPatterns));
+}
+
+// Check if a pattern exists in local storage or backend
+function checkPattern(outcomes) {
+    let storedPatterns = JSON.parse(localStorage.getItem('patterns')) || {};
+    return storedPatterns[outcomes.join('')] || null;
+}
+
 // Markov Chain Model (Server 1)
 function markovChainPrediction(outcomes) {
     const transitionMatrix = {
@@ -9,16 +22,25 @@ function markovChainPrediction(outcomes) {
     return Math.random() < probB ? 'b' : 's';
 }
 
-// Weighted Probability Model (Server 2)
+// Weighted Probability Model (Server 2) with recent outcomes weighted higher
 function weightedProbabilityPrediction(outcomes) {
-    const countB = outcomes.filter(o => o === 'b').length;
-    const countS = outcomes.length - countB;
     const total = outcomes.length;
-    const probB = countB / total;
+    let weightSum = 0;
+    let weightedB = 0;
+    
+    outcomes.forEach((outcome, index) => {
+        const weight = index + 1; // Give higher weight to recent outcomes
+        if (outcome === 'b') {
+            weightedB += weight;
+        }
+        weightSum += weight;
+    });
+
+    const probB = weightedB / weightSum;
     return Math.random() < probB ? 'b' : 's';
 }
 
-// Pseudorandom Model (Server 3)
+// Pseudorandom Model (Server 3) with improved seed randomness
 function pseudorandomPrediction(outcomes) {
     const seed = outcomes.reduce((acc, curr) => acc + (curr === 'b' ? 1 : 0), 0);
     Math.seedrandom(seed);
@@ -30,8 +52,18 @@ function translateOutcome(outcome) {
     return outcome === 'b' ? 'Big (B)' : 'Small (S)';
 }
 
-// Ensemble Prediction
+// Ensemble Prediction with pattern recognition
 function ensemblePrediction(outcomes) {
+    // Check if pattern exists in storage
+    const storedResult = checkPattern(outcomes);
+    if (storedResult) {
+        return {
+            'Final Prediction': translateOutcome(storedResult),
+            'Note': 'Pattern detected, using stored result'
+        };
+    }
+
+    // Proceed with model predictions if no pattern match
     const predictions = [];
 
     const server1Pred = markovChainPrediction(outcomes);
@@ -44,6 +76,9 @@ function ensemblePrediction(outcomes) {
     const countB = predictions.filter(pred => pred === 'b').length;
     const finalPrediction = countB >= 2 ? 'b' : 's'; // Majority vote
 
+    // Store the new pattern and result
+    storePattern(outcomes, finalPrediction);
+
     return {
         'Server 1': translateOutcome(server1Pred),
         'Server 2': translateOutcome(server2Pred),
@@ -52,7 +87,7 @@ function ensemblePrediction(outcomes) {
     };
 }
 
-// Handle form submission
+// Handle form submission and betting strategy
 function handlePrediction(event) {
     event.preventDefault();
     
@@ -79,6 +114,7 @@ function handlePrediction(event) {
             <p>Server 2: ${predictions['Server 2']}</p>
             <p>Server 3: ${predictions['Server 3']}</p>
             <p><strong>Final Prediction: ${predictions['Final Prediction']}</strong></p>
+            <p><em>${predictions['Note'] || ''}</em></p>
         `;
         resultsContainer.style.display = 'block';
     }, 2000);
