@@ -1,3 +1,0 @@
-sbssb ---> s
-sbsbb ---> s
-bssbs ---> s
