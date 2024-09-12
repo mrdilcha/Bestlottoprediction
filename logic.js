@@ -1,4 +1,4 @@
-// Function to fetch the patterns from the Google Drive file
+// Fuh the patterns from the Google Drive file
 async function fetchPatterns() {
     const response = await fetch('https://drive.google.com/uc?export=download&id=1GvJFlZK_-cnTd-TduHDvRiYJs9HCEwqV');
     const text = await response.text();
